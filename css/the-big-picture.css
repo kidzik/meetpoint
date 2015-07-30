@@ -1,0 +1,28 @@
+/*!
+ * Start Bootstrap - The Big Picture HTML Template (http://startbootstrap.com)
+ * Code licensed under the Apache License v2.0.
+ * For details, see http://www.apache.org/licenses/LICENSE-2.0.
+ */
+
+body {
+	margin-top: 50px;
+	margin-bottom: 50px;
+	background: none;
+}
+
+.full {
+  background: url(https://puntapacificomazatlan.files.wordpress.com/2014/10/bigstock-summer-holidays-vacation-and-55257707.jpg) no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+.row {
+    color: #ffffff;
+}
+.well {
+    background-color: rgba(0, 0, 0, 0.4);
+    border-color: rgb(10,10,10);
+    color: #ffffff;
+    width: 50%;
+}
