@@ -29,6 +29,10 @@ app.get('/', function(req, res) {
 });
 // [END hello_world]
 
+app.get('/london.html', function(req, res) {
+  res.sendfile('london.html');
+});
+
 // [START server]
 /* Start the server */
 var server = app.listen(process.env.PORT || '8080', '0.0.0.0', function() {
