@@ -15,6 +15,7 @@
 "use strict";
 
 var express = require('express');
+var https = require('https');
 
 var app = express();
 
@@ -33,43 +34,113 @@ app.get('/results/', function(req, res) {
   res.sendfile('results.html');
 });
 
-function getLon()
+function getFlights(origin)
 {
     var r = new Object();
     r.User = "lor.lucignano@gmail.com";
     r.Pass = "675dd12f8800bc68f38726a4c541ecdeb87beed1";
     r.Environment = "fast_search_1_0";
-    r.Origin = "LON";
+    r.Origin = origin;
     r.DepartureFrom = "2016-01-13";
     r.LengthOfStay = [4,5,6];
     var date = new Date()
     r.DepartureFrom = date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDay();
     r.DepartureTo = date.getFullYear()+"-"+(date.getMonth()+1)+"-"+(date.getDay()+4);
-    console.log(r.DepartureFrom)
-    console.log(r.DepartureTo)
-    r.PriceMax = 1000;
-    var url = 'https://fs-json.demo.vayant.com:7081';
+    r.PriceMax = 10000;
+
+    var url = 'fs-json.demo.vayant.com';
+    var port = '7081';
     var rbody = JSON.stringify(r);
-    var invocation = new XMLHttpRequest();
-    invocation.open('POST', url, true);
-    invocation.setRequestHeader('Content-Type', 'application/json');
-    invocation.onreadystatechange = function(data){
-	if(invocation.readyState == 4 && invocation.status == 200)
-	{
-	    $( "#result" ).text(invocation.responseText)
-	    console.log(invocation.responseText);
+    var res = "";
+
+    var options = {
+	hostname: url,
+	port: port,
+	path: '/',
+	method: 'POST',
+	headers: {
+	    'Content-Type': 'application/json'
 	}
     };
-    invocation.send(rbody);
+
+    var rq = https.request(options, function (response) {
+	//another chunk of data has been recieved, so append it to `str`
+	response.on('data', function (chunk) {
+	    res += chunk;
+	});
+
+	//the whole response has been recieved, so we just print it out here
+	response.on('end', function () {
+	    console.log(res);
+	});
+    });
+    rq.write(rbody);
+    console.log(rbody);
+    rq.end();
+
+    return res;
 }
 
-app.post('/request/', function(req, res) {
+
+function processFlights(flighs){
+    return [{dest: "LON", price: 100, time: 30}];
+}
+
+app.get('/request/', function(req, res) {
     // TODO: 
     // 1) Read origins from req
     // 2) Run requests from origins
+    var flightsFromOrigins = [];
+    console.log(req);
+    flightsFromOrigins.push(processFlights(getFlights(req.query.city1)));
+    flightsFromOrigins.push(processFlights(getFlights(req.query.city2)));
+    flightsFromOrigins.push(processFlights(getFlights(req.query.city3)));
+
     // 3) Save each result in appropriate place in dictionary of airports
+    var airports = {};
+    var i,j;
+    var numPpl = flightsFromOrigins.length;
+    for (i = 0; i < numPpl; i++){
+	for (j = 0; j < flightsFromOrigins[i].length; j++){
+	    var apt = flightsFromOrigins[i][j];
+
+	    // if first user, create the airport info
+	    if (i == 0){
+		airports[apt.dest] = [];
+		var j;
+		for (j = 0; j<numPpl; j++)
+		    airports[apt.dest].push(0);
+	    } // if second user and no airport for the first one then skip
+	    else if (!(apt.dest in airports)){
+		continue;
+	    }
+
+	    // TODO remember the best one not the last one
+	    airports[apt.dest][i] = {price: apt.price, time: apt.time};
+	}
+    }
+
     // 4) Go through all airports and get the cheapest connections
+    var keys = Object.keys(airports);
+
+    function computePrice(lst){
+	if (lst.length < numPpl)
+	    return 999999;
+	var val = 0;
+	var i;
+
+	for (i = 0; i < numPpl; i++){
+	    val += lst[i].price;
+	}
+	return val;
+    }
+    var prices = keys.map(function(v) { return {dest: v, price: computePrice(airports[v]), time: 10} });
+    prices.sort(function(a, b) {
+	return a.price - b.price;
+    });
+
     // 5) Return connections
+    res.json(prices.slice(0,10));
 });
 
 // [START server]

@@ -73,7 +73,7 @@
         <th>Tickets</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody id="t-results">
       <tr>
         <td>Warsaw</td>
         <td>150 CHF</td>
@@ -107,18 +107,47 @@
     <script src="/static/js/bootstrap.min.js"></script>
 
     <script>
+
 (function() {
-  var meetPointAPI = "/request/";
-  $.postJSON( meetPointAPI, {
-    city1: "WAW",
-    city2: "GVA",
-    city3: "ROM"
-  })
-    .done(function( data ) {
-$.each( data.items, function( i, item ) {
-        // add row to results
-      });
-    });
+function clearResults(){
+    $("#t-results").children().remove();
+}
+function addRow(place, price, time){
+    $("#t-results").append(
+        '<tr>' + 
+	'<td>' + place + '</td>' + 
+	'<td>' + price + '</td>' +
+	'<td>' + time +  '</td>' + 
+	'<td><button class="btn btn-default">Book tickets!</button></td>' + 
+	'</tr>');
+}
+
+$.urlParam = function(name, url) {
+    if (!url) {
+     url = window.location.href;
+    }
+    var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(url);
+    if (!results) { 
+        return undefined;
+    }
+    return results[1] || undefined;
+}
+
+    clearResults();
+    var meetPointAPI = "/request/";
+    var query = {
+        city1: $.urlParam('city1'),
+        city2: $.urlParam('city2'),
+        city3: $.urlParam('city3')
+    };
+    function onSuccess( data ) {
+        $.each( data, function( i, item ) {
+            addRow(item.dest, item.price, item.time + " hours");
+        });
+    };
+
+
+    $.get( meetPointAPI, query, onSuccess, "json");
 })();
 </script>
 
